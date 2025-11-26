@@ -159,7 +159,7 @@ function getSessionDurationMinutes(student) {
   if (leave < arrival) {
     return -1;
   }
-  
+
   return leave - arrival;
 }
 
@@ -334,7 +334,7 @@ export default function ProfessorDashboard() {
                 {/* Setting grace period */}
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Grace (mins)
+                    Grace mins for arrival and leave
                   </label>
                   <input
                     type="number"
