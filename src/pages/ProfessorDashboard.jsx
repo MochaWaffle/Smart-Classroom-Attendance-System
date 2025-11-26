@@ -148,12 +148,12 @@ function getSessionDurationMinutes(student) {
   const arrival = getMinuteFromTimestamp(student.lastArrival);
   const leave = getMinuteFromTimestamp(student.lastLeave);
 
-  if (arrival == null || leave == null) {
-    return null;
-  }
-
   if (arrival === -1 || leave === -1) {
     return -1;
+  }
+
+  if (arrival == null || leave == null) {
+    return null;
   }
 
   return leave - arrival;
@@ -163,7 +163,7 @@ function getSessionDurationMinutes(student) {
 function formatSessionDuration(student) {
   const durationMinutes = getSessionDurationMinutes(student);
 
-  if (durationMinutes === null) return "N/A";
+  if (durationMinutes === null || durationMinutes === -1) return "N/A";
 
   const hours = Math.floor(durationMinutes / 60);
   const minutes = durationMinutes % 60;
@@ -207,10 +207,13 @@ export default function ProfessorDashboard() {
     const latestLeaveTime = endMinutes + graceMinutes;
 
     // Returns UNKNOWN if arrival/leave time format is invalid
-    if (arrivalInMinutes === -1 || leaveInMinutes === -1) {
+    // if (arrivalInMinutes === -1 || leaveInMinutes === -1) {
+    //   return "UNKNOWN";
+    // }
+
+    if (durationMinutes === -1) {
       return "UNKNOWN";
     }
-
     // null means student hasn't arrived
     // If the current time is past class end time, that means
     // the student never showed up for the entire session and is marked ABSENT
@@ -407,7 +410,7 @@ export default function ProfessorDashboard() {
                 <div>
                   <span className="text-slate-400 text-xs">Duration</span>
                   <div className="text-xs text-slate-300">
-                    {formatDuration(selectedStudent || "N/A")}
+                    {formatSessionDuration(selectedStudent)}
                   </div>
                 </div>
                 <div>
