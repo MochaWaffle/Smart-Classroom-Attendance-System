@@ -475,7 +475,8 @@ export default function ProfessorDashboard() {
                 <div>
                   <span className="text-slate-400 text-xs">Override status</span>
                   <select
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500
+                                hover:border-emerald-500 hover:bg-slate-950 transition-colors"
                     value={selectedStudent.overrideStatus || ""}
                     onChange={(e) =>
                       setOverrideStatus(selectedStudent.id, e.target.value)
