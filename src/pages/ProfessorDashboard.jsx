@@ -403,7 +403,13 @@ export default function ProfessorDashboard() {
               <StudentCard
                 key={s.id}
                 student={{ ...s, status: computeStatus(s) }}
-                onClick={() => setSelectedStudent(s)}
+                onClick={() => {
+                  if (selectedStudent && selectedStudent.id === s.id) {
+                    setSelectedStudent(null);
+                  } else {
+                    setSelectedStudent(s);
+                  }
+                }}
               />
             ))}
           </div>
