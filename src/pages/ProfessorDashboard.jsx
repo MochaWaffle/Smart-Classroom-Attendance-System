@@ -101,6 +101,76 @@ const MOCK_STUDENTS = [
   },
 ];
 
+// Parses timestamp in "YYYY-MM-DD HH:MM" format and returns total minutes
+// Time is in 24-hour format
+// Null is for no timestamp, while -1 indicates an invalid format
+function getMinuteFromTimestamp(timestamp) {
+  if (!timestamp) {
+    return null;
+  }
+
+  const parts = timestamp.split(" ");
+
+  if (parts.length < 2) {
+    return -1;
+  }
+
+  const [hour, minute] = parts[1].split(":").map(Number);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return -1;
+  }
+
+  return hour * 60 + minute;
+}
+
+// Parses timestring in "HH:MM" format and returns total minutes
+// Time is in 24-hour format
+// Returns null if there is no timestring, while -1 indicates an invalid format
+function getMinuteFromTimestring(timeString) {
+  if (!timeString) {
+    return null;
+  }
+
+  const [hour, minute] = timeString.split(":").map(Number);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return -1;
+  }
+
+  return hour * 60 + minute;
+}
+
+// Calculates the session duration in minutes based on students' arrival and leave times
+// Returns null if not possible
+// Returns -1 if the arrival and/or leave time format is invalid
+function getSessionDurationMinutes(student) {
+  const arrival = getMinuteFromTimestamp(student.lastArrival);
+  const leave = getMinuteFromTimestamp(student.lastLeave);
+
+  if (arrival == null || leave == null) {
+    return null;
+  }
+
+  if (arrival === -1 || leave === -1) {
+    return -1;
+  }
+
+  return leave - arrival;
+}
+
+// Formats session duration based on students' arrival and leave times
+function formatSessionDuration(student) {
+  const durationMinutes = getSessionDurationMinutes(student);
+
+  if (durationMinutes === null) return "N/A";
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  return `${hours}h ${minutes}m`;
+}
+
 export default function ProfessorDashboard() {
   const [courseName, setCourseName] = useState("CS410");
   const [startTime, setStartTime] = useState("09:00");
@@ -112,164 +182,74 @@ export default function ProfessorDashboard() {
   const [students] = useState(MOCK_STUDENTS);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  function getDurationMinutes(student) {
-    let durationMinutes = null;
-
-    // Checks if a student has an leave time
-    if (student.lastArrival && student.lastLeave) {
-        // Format: YYYY-MM-DD HH:MM
-        const arrivalParts = student.lastArrival.split(" ");
-        const leaveParts = student.lastLeave.split(" ");
-
-        // If the format is not messed up, I split HH:MM to hours and minutes
-        if (arrivalParts.length >= 2 && leaveParts.length >= 2) {
-            const [arrivalHour, arrivalMinute] = arrivalParts[1].split(":").map(Number);
-            const [leaveHour, leaveMinute] = leaveParts[1].split(":").map(Number);
-
-            // If the format is valid, I convert the total leave time to minutes
-            // to store in durationMinutes
-            if (!Number.isNaN(arrivalHour) && !Number.isNaN(arrivalMinute) 
-                  && !Number.isNaN(leaveHour) && !Number.isNaN(leaveMinute)) {
-
-                // Conversion
-                const arrivalInMinutes = arrivalHour * 60 + arrivalMinute;
-                const leaveInMinutes = leaveHour * 60 + leaveMinute;
-
-                // As you can see, that's why I converted the total arrival and leave time
-                // to minutes, to easily get the durationMinutes
-                durationMinutes = leaveInMinutes - arrivalInMinutes;
-
-                return durationMinutes;
-            }
-        }
-    }
-
-    return durationMinutes;
-  }
-
-  function formatDuration(student) {
-    const durationMinutes = getDurationMinutes(student);
-
-    if (durationMinutes === null) return "N/A";
-
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
-
-    return `${hours}h ${minutes}m`;
-  }
-
   function computeStatus(student) {
-    // Professor hasn't selected course time
-    if (!startTime || !endTime) return "UNKNOWN";
-
     // Course start and end times in minutes
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const [endHour, endMinute] = endTime.split(":").map(Number);
+    const startMinutes = getMinuteFromTimestring(startTime);
+    const endMinutes = getMinuteFromTimestring(endTime);
 
-    const startMinutes = startHour * 60 + startMinute;
-    const endMinutes = endHour * 60 + endMinute;
+    // Professor hasn't selected course time
+    if (startMinutes === null || endMinutes === null) {
+      return "UNKNOWN";
+    }
 
     // Current real time
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-    // Class ended and student never arrived yields ABSENT
-    if (!student.lastArrival && nowMinutes > endMinutes) {
-        return "ABSENT";
-    }
-
-    // Student hasn't arrived but class hasn't ended yields PENDING
-    if (!student.lastArrival) {
-        return "PENDING";
-    }
-
-    // Format: YYYY-MM-DD HH:MM
-    // Time is in 24-hour format
-    const arrivalParts = student.lastArrival.split(" ");
-
-    // arrivalParts contains two parts
-    // arrivalParts[0] contains the date
-    // arrivalParts[1] contains the time
-    // So, if arrivalParts length is less than 2, one is missing and the format
-    // got messed up. Thus, UNKNOWN status is returned
-    if (arrivalParts.length < 2) return "UNKNOWN";
-
-    // arrivalParts[1] is in HH:MM format
-    // So, I split it by ":" to get hours and minutes
-    const [arrivalHour, arrivalMinute] = arrivalParts[1].split(":").map(Number);
-
-    // Edge case (invalid format)
-    if (Number.isNaN(arrivalHour) || Number.isNaN(arrivalMinute)) return "UNKNOWN";
-
-    // arrivalHour and arrivalMinute is for display.
-    // For calculations, it's easier to convert everything to minutes and compare
-    // that way
-    // So, the total arrival time is stored in minutes here
-    const arrivalInMinutes = arrivalHour * 60 + arrivalMinute;
-
-    // Checks if a student has an leave time and parses it
-    // Technically this part is messy because durationMinutes is only checking the last
-    // arrival and leave time to check how long a student stayed for in one session.
-    // But what if their totalSeconds is more than that session?
-    let durationMinutes = null;
-
-    // Checks if a student has an leave time
-    if (student.lastLeave) {
-        // Format: YYYY-MM-DD HH:MM
-        const leaveParts = student.lastLeave.split(" ");
-
-        // If the format is not messed up, I split HH:MM to hours and minutes
-        if (leaveParts.length >= 2) {
-            const [leaveHour, leaveMinute] = leaveParts[1].split(":").map(Number);
-
-            // If the format is valid, I convert the total leave time to minutes
-            // to store in durationMinutes
-            if (!Number.isNaN(leaveHour) && !Number.isNaN(leaveMinute)) {
-
-                // Conversion
-                const leaveInMinutes = leaveHour * 60 + leaveMinute;
-
-                // As you can see, that's why I converted the total arrival and leave time
-                // to minutes, to easily get the durationMinutes
-                durationMinutes = leaveInMinutes - arrivalInMinutes;
-            } else {
-                // Returns UNKNOWN if leave time format is invalid
-                return "UNKNOWN";
-            }
-        } else {
-            // Returns UNKNOWN if the leave time format is invalid
-            return "UNKNOWN";
-        }
-    }
-
-    // Returns ABSENT if the student did not stay in class long enough
-    // Another reason I converted total arrival and leave time to minutes, to
-    // eventually calculate durationMinutes easily and compare to minMinutesPresent
-    if (durationMinutes !== null && durationMinutes < minMinutesPresent) {
-        return "SKIPPED";
-    }
+    const arrivalInMinutes = getMinuteFromTimestamp(student.lastArrival);
+    const leaveInMinutes = getMinuteFromTimestamp(student.lastLeave);
+    const durationMinutes = getSessionDurationMinutes(student);
 
     // Checks if the student arrived within the grace period
     const latestOnTime = startMinutes + graceMinutes;
 
-    // If durationMinutes is not null, that means the student has clocked out
-    // So, I can check if they were ON_TIME or LATE based on their arrival time
+    // Checks if the student left within the grace period
+    const latestLeaveTime = endMinutes + graceMinutes;
+
+    // Returns UNKNOWN if arrival/leave time format is invalid
+    if (arrivalInMinutes === -1 || leaveInMinutes === -1) {
+      return "UNKNOWN";
+    }
+
+    // null means student hasn't arrived
+    // If the current time is past class end time, that means
+    // the student never showed up for the entire session and is marked ABSENT
+    // Otherwise, the student has not arrived yet, but has time to arrive, so 
+    // they are marked PENDING
+    if (arrivalInMinutes === null) {
+      // Current time is past class end time
+      if (nowMinutes > latestLeaveTime) {
+        return "ABSENT";
+      }
+
+      // Student has not arrived yet, but class is ongoing
+      return "PENDING";
+    }
+
+    
+    // If durationMinutes is not null, that means there is an arrival and leave time
     if (durationMinutes !== null) {
-        if (arrivalInMinutes <= latestOnTime) {
+        // Student arrived but left early, so they are marked as SKIPPED
+        if (durationMinutes < minMinutesPresent) {
+            return "SKIPPED";
+        }
+
+        // Student arrived and left, so check if they were ON_TIME or LATE
+        if (arrivalInMinutes <= latestOnTime && leaveInMinutes <= latestLeaveTime) {
             return "ON_TIME";
         } else {
             return "LATE";
         }
     }
 
+    
+
     // HOWEVER, if durationMinutes is null, that means the student has not clocked out
     // yet. So, if the current time is past the class end time, the student is SKIPPED
     // (because they have not clocked out yet and class has ended)
     // Otherwise, I can still check if they are ON_TIME or LATE based on their arrival time
     // (they did not clock out but class hasn't ended yet)
-
-    // Also, yes, I know, I can definitely refactor this. But I'm on a time crunch right now
-    if (nowMinutes > endMinutes) {
+    if (nowMinutes > latestLeaveTime) {
       return "SKIPPED";
     } else {
         if (arrivalInMinutes <= latestOnTime) {
