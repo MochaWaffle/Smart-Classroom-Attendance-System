@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import ProfessorDashboard from "./pages/ProfessorDashboard.jsx";
 
 function App() {
   return (
     <>
-      <h1>Smart Classroom Attendance System</h1>
+      <ProfessorDashboard />
     </>
   )
 }
