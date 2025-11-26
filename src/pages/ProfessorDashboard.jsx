@@ -229,13 +229,6 @@ export default function ProfessorDashboard() {
   }
 
   function computeStatus(student) {
-
-    // If the professor changed the students' status manually, then
-    // don't compute status. Just return the manually set status.
-    if (student.manuallyModified) {
-      return student.status;
-    }
-
     // Course start and end times in minutes
     const startMinutes = getMinuteFromTimestring(startTime);
     const endMinutes = getMinuteFromTimestring(endTime);
