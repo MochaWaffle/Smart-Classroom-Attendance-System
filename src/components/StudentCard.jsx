@@ -53,7 +53,11 @@ export default function StudentCard({ student, onClick }) {
       /* Color: bg = background, hover = on mouse hover, transition-colors = smooth color change */
       /* bg-slate-900/70 = slate color with 70% opacity */
       /* bg-slate-900 = solid slate color with 100% opacity */
-      className="w-full text-left rounded-2xl border border-slate-800 bg-slate-900/70 p-4 hover:border-emerald-500 hover:bg-slate-900 transition-colors"
+      className="w-full text-left rounded-2xl border border-slate-800 bg-slate-900/70 p-4 
+                  hover:border-emerald-500 hover:bg-slate-900
+                  hover:shadow-lg hover:shadow-emerald-500/50
+                  hover:-translate-y-1 hover:scale-101
+                  transition-all duration-400"
     >
       <div className="flex items-center justify-between mb-2">
         <div>
