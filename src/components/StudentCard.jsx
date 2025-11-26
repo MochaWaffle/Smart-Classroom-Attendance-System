@@ -30,6 +30,7 @@ export default function StudentCard({ student, onClick }) {
     lastArrival,
     lastLeave,
     status,
+    overrideStatus,
   } = student;
 // TODO: Maybe add array to store all arrival/leave times?
 

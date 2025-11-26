@@ -2,6 +2,16 @@ import { useState } from "react";
 import StudentCard from "../components/StudentCard.jsx";
 import { formatTotalDuration } from '../utils/time.jsx';
 
+const STATUS_OPTIONS = [
+  "ON_TIME",
+  "LATE",
+  "PENDING",
+  "ABSENT",
+  "SKIPPED",
+  "EXCUSED",
+  "UNKNOWN",
+];
+
 // Temporary mock data
 const MOCK_STUDENTS = [
   // ON_TIME (with leave time)
@@ -14,6 +24,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25 09:05",
     lastLeave: "2025-11-25 10:10",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // LATE
@@ -26,6 +37,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25 09:15",
     lastLeave: "2025-11-25 10:20",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // ABSENT
@@ -38,6 +50,7 @@ const MOCK_STUDENTS = [
     lastArrival: "",
     lastLeave: "",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // SKIPPED
@@ -50,6 +63,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25 09:02",
     lastLeave: "2025-11-25 09:30",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // Forgot to clock out but class ended
@@ -62,6 +76,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25 09:00",
     lastLeave: "",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // Error on arrival time format
@@ -74,6 +89,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25",
     lastLeave: "",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // Error on leave time format
@@ -86,6 +102,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25 09:00",
     lastLeave: "10:20",
     status: "PENDING",
+    overrideStatus: null,
   },
 
   // Arrives late, but has not clocked out yet
@@ -98,6 +115,7 @@ const MOCK_STUDENTS = [
     lastArrival: "2025-11-25 09:20",
     lastLeave: "",
     status: "PENDING",
+    overrideStatus: null,
   },
 ];
 
@@ -175,6 +193,14 @@ function formatSessionDuration(student) {
   return `${hours}h ${minutes}m`;
 }
 
+function getEffectiveStatus(student, computeFn) {
+  if (student.overrideStatus) {
+    return student.overrideStatus;
+  }
+
+  return computeFn(student);
+}
+
 export default function ProfessorDashboard() {
   const [courseName, setCourseName] = useState("CS410");
   const [startTime, setStartTime] = useState("09:00");
@@ -183,10 +209,33 @@ export default function ProfessorDashboard() {
 
   const [minMinutesPresent, setMinMinutesPresent] = useState(30);
 
-  const [students] = useState(MOCK_STUDENTS);
+  const [students, setStudents] = useState(MOCK_STUDENTS);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  function setOverrideStatus(studentId, newStatus) {
+    setStudents((prev) => 
+      prev.map((s) => 
+      s.id === studentId
+          ? { ...s, overrideStatus: newStatus || null}
+          : s
+      )
+    );
+
+    setSelectedStudent((prev) =>
+      prev && prev.id === studentId
+          ? { ...prev, overrideStatus: newStatus || null}
+          : prev
+    );
+  }
+
   function computeStatus(student) {
+
+    // If the professor changed the students' status manually, then
+    // don't compute status. Just return the manually set status.
+    if (student.manuallyModified) {
+      return student.status;
+    }
+
     // Course start and end times in minutes
     const startMinutes = getMinuteFromTimestring(startTime);
     const endMinutes = getMinuteFromTimestring(endTime);
@@ -420,10 +469,32 @@ export default function ProfessorDashboard() {
                 <div>
                   <span className="text-slate-400 text-xs">Status</span>
                   <div className="text-xs">
-                    {computeStatus(selectedStudent)}
+                    {getEffectiveStatus(selectedStudent, computeStatus)}
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">
+                <div>
+                  <span className="text-slate-400 text-xs">Override status</span>
+                  <select
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={selectedStudent.overrideStatus || ""}
+                    onChange={(e) =>
+                      setOverrideStatus(selectedStudent.id, e.target.value)
+                    }
+                  >
+                    <option value="">Use automatic</option>
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-2">
+                    Choosing a value here locks this student&apos;s status and
+                    ignores automatic rules until you switch back to
+                    <span className="italic"> Use automatic</span>.
+                  </p>
+                </div>
+                <p className="text-xs text-slate-400 mt-4">
                   TODO: per-session history, lateness for
                   each day, etc.
                 </p>
@@ -448,7 +519,7 @@ export default function ProfessorDashboard() {
             {students.map((s) => (
               <StudentCard
                 key={s.id}
-                student={{ ...s, status: computeStatus(s) }}
+                student={{ ...s, status: getEffectiveStatus(s, computeStatus) }}
                 onClick={() => {
                   if (selectedStudent && selectedStudent.id === s.id) {
                     setSelectedStudent(null);
