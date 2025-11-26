@@ -265,7 +265,7 @@ function getEffectiveStatus(student, computeFn) {
 }
 
 // For a single student
-function getAttendanceSummary(student) {
+function getAttendanceSummary(student, currentStatus) {
   const records = student.attendanceRecords || [];
 
   // Filters out unknown statuses
@@ -273,7 +273,24 @@ function getAttendanceSummary(student) {
     COUNTED_STATUSES.includes(r.status)
   );
 
-  const total = counted.length;
+  // const total = counted.length;
+  //const [total, setTotal] = useState(counted.length);
+  let total = counted.length;
+
+  let attended = counted.filter((r) =>
+      PRESENT_STATUSES.includes(r.status)
+    ).length;
+
+  if (currentStatus && currentStatus !== "PENDING" && currentStatus !== "UNKNOWN") {
+    if (COUNTED_STATUSES.includes(currentStatus)) {
+      //setTotal(total + 1);
+      total += 1;
+    }
+
+    if (PRESENT_STATUSES.includes(currentStatus)) {
+      attended += 1;
+    }
+  }
 
   // If attendance record is empty, then can't calculate past attendance
   if (total === 0) {
@@ -281,9 +298,15 @@ function getAttendanceSummary(student) {
   }
 
   // Filter only present statuses and gets its length (attended count)
-  const attended = counted.filter((r) =>
-    PRESENT_STATUSES.includes(r.status)
-  ).length;
+  // const attended = counted.filter((r) =>
+  //   PRESENT_STATUSES.includes(r.status)
+  // ).length;
+
+  // const [attended, setAttended] = useState(
+  //   counted.filter((r) =>
+  //     PRESENT_STATUSES.includes(r.status)
+  //   ).length
+  // );
 
   // Calculates percentage (unrounded)
   const percent = ((attended / total) * 100);
@@ -292,7 +315,7 @@ function getAttendanceSummary(student) {
 }
 
 // For the whole class
-function getClassAttendanceSummary(students) {
+function getClassAttendanceSummary(students, computeStatus) {
   let totalSessions = 0;
   let totalAttended = 0;
 
@@ -300,7 +323,8 @@ function getClassAttendanceSummary(students) {
   // and adds them to totalSessions and totalAttended
   // (to calculate class average)
   students.forEach((s) => {
-    const { attended, total } = getAttendanceSummary(s);
+    const effectiveStatus = getEffectiveStatus(s, computeStatus);
+    const { attended, total } = getAttendanceSummary(s, effectiveStatus);
     totalSessions += total;
     totalAttended += attended;
   });
@@ -459,7 +483,7 @@ export default function ProfessorDashboard() {
       <main className="px-6 py-4 space-y-6">
         <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 mb-2">
           {(() => {
-            const { totalSessions, totalAttended, percent } = getClassAttendanceSummary(students);
+            const { totalSessions, totalAttended, percent } = getClassAttendanceSummary(students, computeStatus);
             const color = getAttendanceColorClass(percent);
             const emoji = getAttendanceEmoji(percent);
 
@@ -650,7 +674,8 @@ export default function ProfessorDashboard() {
                 <div>
                   <span className="text-slate-400 text-xs">Attendance</span>
                   {(() => {
-                    const { attended, total, percent } = getAttendanceSummary(selectedStudent);
+                    const effectiveStatus = getEffectiveStatus(selectedStudent, computeStatus);
+                    const { attended, total, percent } = getAttendanceSummary(selectedStudent, effectiveStatus);
                     const color = getAttendanceColorClass(percent);
                     const emoji = getAttendanceEmoji(percent);
 
@@ -706,11 +731,12 @@ export default function ProfessorDashboard() {
               large screens shows 3 cards per row. */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {students.map((s) => {
-              const attendanceSummary = getAttendanceSummary(s);
+              const effectiveStatus = getEffectiveStatus(s, computeStatus);
+              const attendanceSummary = getAttendanceSummary(s, effectiveStatus);
               return (
                 <StudentCard
                   key={s.id}
-                  student={{ ...s, status: getEffectiveStatus(s, computeStatus) }}
+                  student={{ ...s, status: effectiveStatus }}
                   attendanceSummary={attendanceSummary}
                   onClick={() => {
                     if (selectedStudent && selectedStudent.id === s.id) {
