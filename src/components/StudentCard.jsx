@@ -1,5 +1,15 @@
 import { formatTotalDuration } from '../utils/time.jsx';
 
+const statusColorMap = {
+  ON_TIME: "emerald",
+  LATE: "red",
+  PENDING: "amber",
+  ABSENT: "fuchsia",
+  SKIPPED: "pink",
+  EXCUSED: "blue",
+  UNKNOWN: "slate"
+};
+
 export default function StudentCard({ student, onClick }) {
   // uid - Unique identifier based on the students' NFC card
   // Visits - Number of times a student clocks in and out during class
@@ -43,6 +53,8 @@ export default function StudentCard({ student, onClick }) {
   //   return `${hour}h ${minutes}m ${seconds}s`;
   // }
 
+  const color = statusColorMap[status] || "slate";
+
   return (
     <button
       onClick={onClick}
@@ -67,21 +79,7 @@ export default function StudentCard({ student, onClick }) {
           <div className="text-xs text-slate-400">{uid}</div>
         </div>
         <span
-          className={`text-xs px-2 py-1 rounded-full border ${
-            status === "LATE"
-              ? "border-red-500/60 text-red-300"
-              : status === "ON_TIME"
-              ? "border-emerald-500/60 text-emerald-300"
-              : status === "PENDING"
-              ? "border-amber-500/60 text-amber-300"
-              : status === "ABSENT"
-              ? "border-fuchsia-500/60 text-fuchsia-300"
-              : status === "SKIPPED"
-              ? "border-pink-500/60 text-pink-300"
-              : status === "EXCUSED"
-              ? "border-blue-500/60 text-blue-300"
-              : "border-slate-500/60 text-slate-300"
-          }`}
+          className={`text-xs px-2 py-1 rounded-full border border-${color}-500/60 text-${color}-300`}
         >
           {status || "PENDING"}
         </span>
