@@ -340,10 +340,10 @@ export default function ProfessorDashboard({ onLogout }) {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold mb-1">
-                    Class attendance overview
+                    Class Attendance Overview
                   </h2>
                   <p className={`text-sm font-medium ${color}`}>
-                    Average attendance: {percent}%{" "}
+                    Average Attendance: {percent}%{" "}
                     {totalSessions > 0 &&
                       `(${totalAttended}/${totalSessions} total session-marks)`}
                   </p>
@@ -362,13 +362,13 @@ export default function ProfessorDashboard({ onLogout }) {
         <section className="grid md:grid-cols-[2fr,3fr] gap-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
             <h2 className="text-sm font-semibold mb-3">
-              Course configuration
+              Course Configuration
             </h2>
             {/* Setting course name */}
             <div className="space-y-3 text-sm">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">
-                  Course name
+                  Course Name
                 </label>
                 <input
                   type="text"
@@ -383,7 +383,7 @@ export default function ProfessorDashboard({ onLogout }) {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Start time
+                    Start Time
                   </label>
                   <input
                     type="time"
@@ -395,7 +395,7 @@ export default function ProfessorDashboard({ onLogout }) {
                 {/* Setting end time */}
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    End time
+                    End Time
                   </label>
                   <input
                     type="time"
@@ -407,7 +407,7 @@ export default function ProfessorDashboard({ onLogout }) {
                 {/* Setting grace period */}
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                    Grace mins for arrival and leave
+                    Grace Minutes For Arrival And Leave
                   </label>
                   <input
                     type="number"
@@ -422,7 +422,7 @@ export default function ProfessorDashboard({ onLogout }) {
                 </div>
                   <div>
                   <label className="block text-xs text-slate-400 mb-1">
-                      Minimum minutes present to mark as attended
+                      Minimum Minutes Present To Mark As Attended
                   </label>
                   <input
                       type="number"
@@ -463,14 +463,14 @@ export default function ProfessorDashboard({ onLogout }) {
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-xs">Total time</span>
+                  <span className="text-slate-400 text-xs">Total Time</span>
                   <div className="text-xs text-slate-300">
                     {formatTotalDuration(selectedStudent.totalSeconds || 0)}
                   </div>
                 </div>
                 <div>
                   <span className="text-slate-400 text-xs">
-                    Arrival time
+                    Arrival Time
                   </span>
                   <div className="text-xs">
                     {selectedStudent.lastArrival || "N/A"}
@@ -478,7 +478,7 @@ export default function ProfessorDashboard({ onLogout }) {
                 </div>
                 <div>
                   <span className="text-slate-400 text-xs">
-                    Leave time
+                    Leave Time
                   </span>
                   <div className="text-xs">
                     {selectedStudent.lastLeave || "N/A"}
@@ -497,7 +497,7 @@ export default function ProfessorDashboard({ onLogout }) {
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-400 text-xs">Override status</span>
+                  <span className="text-slate-400 text-xs">Override Status</span>
                   <select
                     className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500
                                 hover:border-emerald-500 hover:bg-slate-900 transition-colors"
@@ -506,7 +506,7 @@ export default function ProfessorDashboard({ onLogout }) {
                       setOverrideStatus(selectedStudent.id, e.target.value)
                     }
                   >
-                    <option value="">Use automatic</option>
+                    <option value="">Use Automatic</option>
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -573,7 +573,7 @@ export default function ProfessorDashboard({ onLogout }) {
         {/* Student cards grid */}
         <section>
           <h2 className="text-sm font-semibold mb-2">
-            Students in this class
+            Students In This Class
           </h2>
           {/* Grid system: https://tailwindcss.com/docs/grid-template-columns */}
           {/* Default shows 1 card per row. Medium screens shows 2 cards per row, while
