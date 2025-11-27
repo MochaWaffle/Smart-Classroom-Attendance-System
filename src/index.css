@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* https://tailwindcss.com/docs/background-color */
+/* Idk what theme to choose. But this looks nice so far */
+body {
+    background-color: var(--color-slate-950);
+}
