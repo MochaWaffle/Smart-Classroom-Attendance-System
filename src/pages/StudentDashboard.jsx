@@ -33,13 +33,23 @@ function getMinuteFromTimestamp(timestamp) {
     return -1;
   }
 
-  const [hour, minute] = parts[1].split(":").map(Number);
+  const [hour, minute, seconds] = parts[1].split(":").map(Number);
 
   if (Number.isNaN(hour) || Number.isNaN(minute)) {
     return -1;
   }
 
-  return hour * 60 + minute;
+  if (seconds) {
+    if (Number.isNaN(seconds)) {
+      return -1;
+    }
+  }
+
+  if (seconds) {
+      return (hour * 60) + minute + (seconds / 60);
+  }
+
+  return (hour * 60) + minute;
 }
 
 // Parses timestring in "HH:MM" format and returns total minutes
@@ -87,10 +97,17 @@ function formatSessionDuration(student) {
 
   if (durationMinutes === null || durationMinutes === -1) return "N/A";
 
-  const hours = Math.floor(durationMinutes / 60);
-  const minutes = durationMinutes % 60;
+  const totalSeconds = Math.floor(durationMinutes * 60);
 
-  return `${hours}h ${minutes}m`;
+  // const hours = Math.floor(durationMinutes / 60);
+  // const minutes = durationMinutes % 60;
+  // const seconds = durationMinutes * 60;
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `${hours}h ${minutes}m ${seconds}s`;
 }
 
 function getEffectiveStatus(student, computeFn) {
