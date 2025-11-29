@@ -6,8 +6,8 @@ export const MOCK_STUDENTS = [
     uid: "04:A3:BC:91",
     totalSeconds: 5400,
     visitCount: 3,
-    lastArrival: "2025-11-25 09:05",
-    lastLeave: "2025-11-25 10:10",
+    lastArrival: "2025-11-25 09:05:10",
+    lastLeave: "2025-11-25 10:10:05",
     status: "PENDING",
     overrideStatus: null,
     attendanceRecords: [

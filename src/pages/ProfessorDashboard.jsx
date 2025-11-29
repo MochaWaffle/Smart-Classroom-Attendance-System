@@ -34,13 +34,23 @@ function getMinuteFromTimestamp(timestamp) {
     return -1;
   }
 
-  const [hour, minute] = parts[1].split(":").map(Number);
+  const [hour, minute, seconds] = parts[1].split(":").map(Number);
 
   if (Number.isNaN(hour) || Number.isNaN(minute)) {
     return -1;
   }
 
-  return hour * 60 + minute;
+  if (seconds) {
+    if (Number.isNaN(seconds)) {
+      return -1;
+    }
+  }
+
+  if (seconds) {
+      return (hour * 60) + minute + (seconds / 60);
+  }
+
+  return (hour * 60) + minute;
 }
 
 // Parses timestring in "HH:MM" format and returns total minutes
@@ -88,10 +98,17 @@ function formatSessionDuration(student) {
 
   if (durationMinutes === null || durationMinutes === -1) return "N/A";
 
-  const hours = Math.floor(durationMinutes / 60);
-  const minutes = durationMinutes % 60;
+  const totalSeconds = Math.floor(durationMinutes * 60);
 
-  return `${hours}h ${minutes}m`;
+  // const hours = Math.floor(durationMinutes / 60);
+  // const minutes = durationMinutes % 60;
+  // const seconds = durationMinutes * 60;
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `${hours}h ${minutes}m ${seconds}s`;
 }
 
 function getEffectiveStatus(student, computeFn) {
@@ -232,7 +249,7 @@ export default function ProfessorDashboard({ onLogout }) {
 
     // Current real time
     const now = new Date();
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
 
     const arrivalInMinutes = getMinuteFromTimestamp(student.lastArrival);
     const leaveInMinutes = getMinuteFromTimestamp(student.lastLeave);
@@ -343,7 +360,7 @@ export default function ProfessorDashboard({ onLogout }) {
                     Class Attendance Overview
                   </h2>
                   <p className={`text-sm font-medium ${color}`}>
-                    Average Attendance: {percent}%{" "}
+                    Average Attendance: {percent.toFixed(2)}%{" "}
                     {totalSessions > 0 &&
                       `(${totalAttended}/${totalSessions} total session-marks)`}
                   </p>
@@ -533,7 +550,7 @@ export default function ProfessorDashboard({ onLogout }) {
                         <div>
                           <div className={`text-sm font-semibold ${color}`}>
                             {total > 0
-                              ? `${percent}% attendance (${attended}/${total} sessions)`
+                              ? `${percent.toFixed(2)}% attendance (${attended}/${total} sessions)`
                               : "No attendance data"}
                           </div>
                           {total > 0 && (
