@@ -9,6 +9,11 @@ import { STATUS_OPTIONS,
           getAttendanceEmoji
 } from "../utils/attendance.js";
 
+import ClassAttendanceOverview from "../components/ClassAttendanceOverview.jsx";
+import CourseConfigPanel from "../components/CourseConfigPanel.jsx";
+import StudentDetailsPanel from "../components/StudentDetailsPanel.jsx";
+import StudentsGrid from "../components/StudentsGrid.jsx";
+
 export default function ProfessorDashboard({ onLogout }) {
   const [courseName, setCourseName] = useState("CS410");
   const [startTime, setStartTime] = useState("09:00");
@@ -146,275 +151,40 @@ export default function ProfessorDashboard({ onLogout }) {
 
       {/* Main content area */}
       <main className="px-6 py-4 space-y-6">
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 mb-2">
-          {(() => {
-            const { totalSessions, totalAttended, percent } = getClassAttendanceSummary(students, computeStatus);
-            const color = getAttendanceColorClass(percent);
-            const emoji = getAttendanceEmoji(percent);
+        <ClassAttendanceOverview 
+            students = {students}
+            computeStatus = {computeStatus} 
+        />
 
-            return (
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold mb-1">
-                    Class Attendance Overview
-                  </h2>
-                  <p className={`text-sm font-medium ${color}`}>
-                    Average Attendance: {percent.toFixed(2)}%{" "}
-                    {totalSessions > 0 &&
-                      `(${totalAttended}/${totalSessions} total session-marks)`}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Based on counted statuses: ON_TIME, LATE, ABSENT, SKIPPED, EXCUSED.
-                  </p>
-                </div>
-                <div className="text-3xl">
-                  {emoji}
-                </div>
-              </div>
-            );
-          })()}
-        </section>
         {/* Course configuration area */}
         <section className="grid md:grid-cols-[2fr,3fr] gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-            <h2 className="text-sm font-semibold mb-3">
-              Course Configuration
-            </h2>
-            {/* Setting course name */}
-            <div className="space-y-3 text-sm">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">
-                  Course Name
-                </label>
-                <input
-                  type="text"
-                  value={courseName}
-                  onChange={(e) => setCourseName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="e.g. CS101 - Intro to CS"
-                />
-              </div>
+          <CourseConfigPanel
+            courseName={courseName}
+            startTime={startTime}
+            endTime={endTime}
+            graceMinutes={graceMinutes}
+            minMinutesPresent={minMinutesPresent}
+            onCourseNameChange={setCourseName}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onGraceMinutesChange={setGraceMinutes}
+            onMinMinutesPresentChange={setMinMinutesPresent}
+          />
 
-              {/* Setting start time */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">
-                    Start Time
-                  </label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                {/* Setting end time */}
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">
-                    End Time
-                  </label>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                {/* Setting grace period */}
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">
-                    Grace Minutes For Arrival And Leave
-                  </label>
-                  <input
-                    type="number"
-                    value={graceMinutes}
-                    onChange={(e) =>
-                      setGraceMinutes(Number(e.target.value))
-                    }
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                {/* Setting minimum minutes present */}
-                </div>
-                  <div>
-                  <label className="block text-xs text-slate-400 mb-1">
-                      Minimum Minutes Present To Mark As Attended
-                  </label>
-                  <input
-                      type="number"
-                      value={minMinutesPresent}
-                      onChange={(e) => setMinMinutesPresent(Number(e.target.value))}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Changing these values will recalculate who is considered{" "}
-                <span className="text-emerald-300">ON_TIME</span>,
-                {" "} <span className="text-red-300">LATE</span>,
-                {" "} <span className="text-amber-300">PENDING</span>,
-                {" "} <span className="text-fuchsia-300">ABSENT</span>, and
-                {" "} <span className="text-pink-300">SKIPPED</span>,
-                based on their
-                arrival time.
-              </p>
-            </div>
-          </div>
-
-          {/* Selected student details */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-            <h2 className="text-sm font-semibold mb-3">
-              {selectedStudent ? "Student details" : "Select a student"}
-            </h2>
-
-            {selectedStudent ? (
-              <div className="text-sm text-slate-200 space-y-2">
-                <div>
-                  <span className="text-slate-400 text-xs">Name</span>
-                  <div className="font-medium">{selectedStudent.name}</div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">UID</span>
-                  <div className="text-xs text-slate-300">
-                    {selectedStudent.uid}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">Total Time</span>
-                  <div className="text-xs text-slate-300">
-                    {formatTotalDuration(selectedStudent.totalSeconds || 0)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">
-                    Arrival Time
-                  </span>
-                  <div className="text-xs">
-                    {selectedStudent.lastArrival || "N/A"}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">
-                    Leave Time
-                  </span>
-                  <div className="text-xs">
-                    {selectedStudent.lastLeave || "N/A"}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">Duration</span>
-                  <div className="text-xs text-slate-300">
-                    {formatSessionDuration(selectedStudent)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">Status</span>
-                  <div className="text-xs">
-                    {getEffectiveStatus(selectedStudent, computeStatus)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-xs">Override Status</span>
-                  <select
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500
-                                hover:border-emerald-500 hover:bg-slate-900 transition-colors"
-                    value={selectedStudent.overrideStatus || ""}
-                    onChange={(e) =>
-                      setOverrideStatus(selectedStudent.id, e.target.value)
-                    }
-                  >
-                    <option value="">Use Automatic</option>
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-slate-500 mt-2">
-                    Choosing a value here locks this student&apos;s status and
-                    ignores automatic rules until you switch back to
-                    <span className="italic"> Use automatic</span>.
-                  </p>
-                </div>
-
-                <div>
-                  <span className="text-slate-400 text-xs">Attendance</span>
-                  {(() => {
-                    const effectiveStatus = getEffectiveStatus(selectedStudent, computeStatus);
-                    const { attended, total, percent } = getAttendanceSummary(selectedStudent, effectiveStatus);
-                    const color = getAttendanceColorClass(percent);
-                    const emoji = getAttendanceEmoji(percent);
-
-                    return (
-                      <div className="mt-1 flex items-center justify-between">
-                        <div>
-                          <div className={`text-sm font-semibold ${color}`}>
-                            {total > 0
-                              ? `${percent.toFixed(2)}% attendance (${attended}/${total} sessions)`
-                              : "No attendance data"}
-                          </div>
-                          {total > 0 && (
-                            <div className="text-[10px] text-slate-500">
-                              Present = ON_TIME, LATE, or EXCUSED
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-2xl ml-3">
-                          {emoji}
-                          {/* Image alternative (I might implement this later)
-                            <img
-                              src={getAttendanceImageSrc(percent)}
-                              alt="Attendance tier"
-                              className="w-10 h-10"
-                            />
-                          */}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <p className="text-xs text-slate-400 mt-4">
-                  TODO: per-session history, lateness for
-                  each day, etc.
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400">
-                Click on a student card to see more details here.
-              </p>
-            )}
-          </div>
+          <StudentDetailsPanel
+            selectedStudent={selectedStudent}
+            computeStatus={computeStatus}
+            onOverrideStatusChange={setOverrideStatus}
+          />
         </section>
 
         {/* Student cards grid */}
-        <section>
-          <h2 className="text-sm font-semibold mb-2">
-            Students In This Class
-          </h2>
-          {/* Grid system: https://tailwindcss.com/docs/grid-template-columns */}
-          {/* Default shows 1 card per row. Medium screens shows 2 cards per row, while
-              large screens shows 3 cards per row. */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {students.map((s) => {
-              const effectiveStatus = getEffectiveStatus(s, computeStatus);
-              const attendanceSummary = getAttendanceSummary(s, effectiveStatus);
-              return (
-                <StudentCard
-                  key={s.id}
-                  student={{ ...s, status: effectiveStatus }}
-                  attendanceSummary={attendanceSummary}
-                  onClick={() => {
-                    if (selectedStudent && selectedStudent.id === s.id) {
-                      setSelectedStudent(null);
-                    } else {
-                      setSelectedStudent(s);
-                    }
-                  }}
-                />
-              );
-            })}
-          </div>
-        </section>
+        <StudentsGrid
+          students={students}
+          selectedStudent={selectedStudent}
+          computeStatus={computeStatus}
+          onSelectStudent={setSelectedStudent}
+        />
       </main>
     </div>
   );
