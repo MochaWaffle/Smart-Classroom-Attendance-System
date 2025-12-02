@@ -42,6 +42,7 @@ export default function StudentDashboard({
     );
   }
 
+  
   const uid = student.uid || student.id;
 
   // course config as read-only values coming from Firestore
@@ -188,7 +189,7 @@ export default function StudentDashboard({
   }
 
   // if Firestore doc missing, still show *something* using global student info
-  const displayStudent =
+  const baseStudent =
     courseStudent || {
       id: uid,
       uid,
@@ -199,8 +200,38 @@ export default function StudentDashboard({
       attendanceRecords: [],
       status: null,
       overrideStatus: null,
+      visitCount: 0,
     };
 
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const records = Array.isArray(baseStudent.attendanceRecords)
+      ? baseStudent.attendanceRecords
+      : [];
+    const todayRecord = records.find((r) => r.date === todayKey);
+
+    const displayStudent = todayRecord
+      ? {
+          ...baseStudent,
+          // trust today's snapshot for the student view
+          lastArrival: todayRecord.lastArrival ?? baseStudent.lastArrival,
+          lastLeave: todayRecord.lastLeave ?? baseStudent.lastLeave,
+          totalSeconds:
+            typeof todayRecord.durationSeconds === "number"
+              ? todayRecord.durationSeconds
+              : baseStudent.totalSeconds,
+          visitCount:
+            typeof todayRecord.visitCount === "number"
+              ? todayRecord.visitCount
+              : baseStudent.visitCount,
+          status:
+            todayRecord.overrideStatus ||
+            todayRecord.status ||
+            baseStudent.status,
+          overrideStatus:
+            todayRecord.overrideStatus ?? baseStudent.overrideStatus,
+        }
+      : baseStudent;
+      
   const effectiveStatus = getEffectiveStatus(displayStudent, computeStatus, false);
   const attendanceSummary = getAttendanceSummary(
     displayStudent,
