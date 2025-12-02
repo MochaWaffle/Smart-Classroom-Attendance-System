@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { db } from "../utils/firebase";
-import { doc, getDoc, setDoc, getDocs, collection } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocs, collection, deleteDoc } from "firebase/firestore";
 
 import { MOCK_STUDENTS } from "../data/mockStudents.js";
 import {
@@ -222,6 +222,31 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
     setShowAddStudentForm(false);
   }
 
+  async function handleDeleteStudent(student) {
+    if (!courseDocId) return;
+
+    const confirmed = window.confirm(
+      `Remove ${student.name || student.uid} from this course? This action cannot be undone!`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(
+        doc(db, "courses", courseDocId, "students", student.id)
+      );
+
+      // update local state
+      setStudents((prev) => prev.filter((s) => s.id !== student.id));
+
+      if (selectedStudent && selectedStudent.id === student.id) {
+        setSelectedStudent(null);
+      }
+    } catch (e) {
+      console.error("[ProfessorDashboard] Error deleting student:", e);
+    }
+  }
+
   return (
     <DashboardLayout title="Professor Dashboard" onLogout={onLogout}>
       {/* Top: class overview */}
@@ -277,6 +302,7 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
           computeStatus={computeStatus}
           onOverrideStatusChange={setOverrideStatus}
           showOverrideControls={true}
+          onDeleteStudent={handleDeleteStudent}
         />
       </section>
 
