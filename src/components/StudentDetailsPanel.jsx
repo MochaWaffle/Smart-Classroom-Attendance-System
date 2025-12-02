@@ -6,7 +6,7 @@ import {
   getAttendanceColorClass,
   getAttendanceEmoji,
 } from "../utils/attendance";
-import { formatTotalDuration } from "../utils/time"; // your existing util
+import { formatTotalDuration } from "../utils/time";
 
 export default function StudentDetailsPanel({
   selectedStudent,
@@ -162,10 +162,70 @@ export default function StudentDetailsPanel({
                       </button>
                     </div>
                   )}
-                <p className="text-xs text-slate-400 mt-4">
-                  TODO: per-session history, lateness for
-                  each day, etc.
-                </p>
+                <div className="mt-3">
+                  <span className="text-slate-400 text-xs">Session history</span>
+                  {(() => {
+                    const records = Array.isArray(selectedStudent.attendanceRecords)
+                      ? [...selectedStudent.attendanceRecords]
+                      : [];
+
+                    if (records.length === 0) {
+                      return (
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          No saved sessions yet.
+                        </p>
+                      );
+                    }
+
+                    // newest first
+                    records.sort((a, b) => b.date.localeCompare(a.date));
+
+                    return (
+                      <div className="mt-1 max-h-40 overflow-y-auto pr-1 space-y-1">
+                        {records.map((rec, idx) => {
+                          const effStatus =
+                            rec.overrideStatus || rec.status || "UNKNOWN";
+
+                          return (
+                            <div
+                              key={`${rec.date}-${idx}`}
+                              className="flex justify-between items-baseline text-[11px] border border-slate-800 rounded-lg px-2 py-1 bg-slate-950/60"
+                            >
+                              <div>
+                                <div className="font-medium text-slate-100">
+                                  {rec.date}
+                                </div>
+                                <div className="text-slate-400">
+                                  {(rec.lastArrival || "N/A") +
+                                    " → " +
+                                    (rec.lastLeave || "N/A")}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="inline-flex items-center rounded-full border border-slate-600 px-2 py-0.5 text-[10px] text-slate-100">
+                                  {effStatus}
+                                  {rec.overrideStatus && (
+                                    <span className="ml-1 text-[9px] text-amber-300">
+                                      (override)
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-slate-400 mt-0.5">
+                                  {formatTotalDuration(rec.durationSeconds || 0)}
+                                </div>
+                                {typeof rec.visitCount === "number" && (
+                                  <div className="text-slate-500">
+                                    visits: {rec.visitCount}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+              </div>
         </div>
       )}
     </div>
