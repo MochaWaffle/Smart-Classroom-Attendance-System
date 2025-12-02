@@ -139,26 +139,28 @@ export default function StudentDetailsPanel({
                   })()}
                 </div>
                 {/* <span className="text-slate-400 text-xs">Delete Student</span> */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation(); // don’t trigger the card’s onClick
+                {showOverrideControls && (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation(); // don’t trigger the card’s onClick
 
-                      if (onDeleteStudent && selectedStudent) {
-                        onDeleteStudent(selectedStudent);
-                      }
-                    }}
-                    className="text-[12px] mt-2 px-2 py-0.5 rounded-full
-                              border border-red-500/60 text-red-300 bg-slate-900/80
-                              hover:bg-red-500/10 hover:border-red-400 
-                              hover:shadow-lg hover:shadow-red-500/50
-                              hover:-translate-y-1 hover:scale-101
-                              transition-all duration-400"
-                  >
-                    Delete Student
-                  </button>
-                </div>
+                          if (onDeleteStudent && selectedStudent) {
+                            onDeleteStudent(selectedStudent);
+                          }
+                        }}
+                        className="text-[12px] mt-2 px-2 py-0.5 rounded-full
+                                  border border-red-500/60 text-red-300 bg-slate-900/80
+                                  hover:bg-red-500/10 hover:border-red-400 
+                                  hover:shadow-lg hover:shadow-red-500/50
+                                  hover:-translate-y-1 hover:scale-101
+                                  transition-all duration-400"
+                      >
+                        Delete Student
+                      </button>
+                    </div>
+                  )}
                 <p className="text-xs text-slate-400 mt-4">
                   TODO: per-session history, lateness for
                   each day, etc.

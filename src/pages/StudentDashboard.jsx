@@ -80,7 +80,7 @@ export default function StudentDashboard({
           const data = snap.data();
           const full = { id: snap.id, ...data };
           setCourseStudent(full);
-          setSelectedStudent(full);
+          //setSelectedStudent(full);
         } else {
           // not registered to this course
           setCourseStudent(null);
@@ -217,7 +217,7 @@ export default function StudentDashboard({
         />
 
         <StudentDetailsPanel
-          selectedStudent={selectedStudent || displayStudent}
+          selectedStudent={selectedStudent}
           computeStatus={computeStatus}
           onOverrideStatusChange={() => {}}
           showOverrideControls={false}
