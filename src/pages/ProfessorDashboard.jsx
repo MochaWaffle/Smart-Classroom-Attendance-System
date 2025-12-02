@@ -17,6 +17,11 @@ import StudentDetailsPanel from "../components/StudentDetailsPanel.jsx";
 import StudentsGrid from "../components/StudentsGrid.jsx";
 import AddStudent from "../components/AddStudent.jsx";
 
+function getTodayKey() {
+  // Local date, simple and good enough for this project
+  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+}
+
 export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }) {
   // Course configuration state (initialized from courseMeta)
   const [courseName, setCourseName] = useState(
@@ -41,8 +46,11 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
 
   // UI feedback for saving config
   const [savingConfig, setSavingConfig] = useState(false);
+  const [savingAttendance, setSavingAttendance] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [saveAttendanceError, setSaveAttendanceError] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [lastSavedAttendance, setLastSavedAttendance] = useState(null);
 
   // Students (still local for now)
   const [students, setStudents] = useState([]);
@@ -257,34 +265,32 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
 
   // Override status for a student
   async function setOverrideStatus(studentId, newStatus) {
-      const override = newStatus || null;
+    const override = newStatus || null;
 
-      // Local state: overrideStatus only. Status is not updated here
-      // Updates selected students' override status
-      setStudents((prev) =>
-        prev.map((s) =>
-          s.id === studentId ? { ...s, overrideStatus: override } : s
-        )
-      );
+    // 1) Local state: overrideStatus only
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.id === studentId ? { ...s, overrideStatus: override } : s
+      )
+    );
 
-      // Updates selected student override status
-      setSelectedStudent((prev) =>
-        prev && prev.id === studentId
-          ? { ...prev, overrideStatus: override }
-          : prev
-      );
+    setSelectedStudent((prev) =>
+      prev && prev.id === studentId
+        ? { ...prev, overrideStatus: override }
+        : prev
+    );
 
-      if (!courseDocId) return;
+    if (!courseDocId) return;
 
-      // Updates selected student override status in the database
-      try {
-        const ref = doc(db, "courses", courseDocId, "students", studentId);
-        await updateDoc(ref, {
-          overrideStatus: override,
-        });
-      } catch (e) {
-        console.error("[ProfessorDashboard] Error saving overrideStatus:", e);
-      }
+    // 2) Persist overrideStatus to Firestore, but DO NOT touch attendanceRecords
+    try {
+      const ref = doc(db, "courses", courseDocId, "students", studentId);
+      await updateDoc(ref, {
+        overrideStatus: override,
+      });
+    } catch (e) {
+      console.error("[ProfessorDashboard] Error saving overrideStatus:", e);
+    }
   }
 
   // Compute status now returns the students status that's been
@@ -351,12 +357,112 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
     }
   }
 
+  async function finalizeTodayAttendance() {
+      if (!courseDocId) return;
+      if (!students || students.length === 0) return;
+
+      const todayKey = getTodayKey();
+
+      const confirmed = window.confirm(
+        `Snapshot today's attendance for ${students.length} student(s)?`
+      );
+      if (!confirmed) return;
+
+      try {
+        setSavingAttendance(true);
+        setSaveAttendanceError("");
+        const updated = [];
+
+        for (const s of students) {
+          if (!s) continue;
+
+          // 1) compute automatic + effective status
+          const auto = computeAutomaticStatus(s);
+          const effectiveStatus = s.overrideStatus || auto || "UNKNOWN";
+
+          // 2) duration snapshot (seconds)
+          const durSeconds =
+            typeof s.totalSeconds === "number"
+              ? s.totalSeconds
+              : Math.max(
+                  0,
+                  Math.round((getSessionDurationMinutes(s) || 0) * 60)
+                );
+
+          // 3) existing history without any previous record for today
+          const existingRecords = Array.isArray(s.attendanceRecords)
+            ? s.attendanceRecords.filter((rec) => rec.date !== todayKey)
+            : [];
+
+          const record = {
+            date: todayKey,
+            status: effectiveStatus,
+            overrideStatus: s.overrideStatus || null,
+            lastArrival: s.lastArrival || null,
+            lastLeave: s.lastLeave || null,
+            durationSeconds: durSeconds,
+            visitCount: s.visitCout || 0
+          };
+
+          const newRecords = [...existingRecords, record];
+
+          // 4) write to Firestore
+          const ref = doc(db, "courses", courseDocId, "students", s.id);
+          await updateDoc(ref, {
+            attendanceRecords: newRecords,
+            status: effectiveStatus,
+          });
+
+          updated.push({
+            id: s.id,
+            attendanceRecords: newRecords,
+            status: effectiveStatus,
+          });
+        }
+
+        // 5) update local state
+        if (updated.length > 0) {
+          setStudents((prev) =>
+            prev.map((s) => {
+              const u = updated.find((x) => x.id === s.id);
+              return u
+                ? {
+                    ...s,
+                    attendanceRecords: u.attendanceRecords,
+                    status: u.status,
+                  }
+                : s;
+            })
+          );
+
+          setSelectedStudent((prev) => {
+            if (!prev) return prev;
+            const u = updated.find((x) => x.id === prev.id);
+            return u
+              ? {
+                  ...prev,
+                  attendanceRecords: u.attendanceRecords,
+                  status: u.status,
+                }
+              : prev;
+          });
+        }
+        setLastSavedAttendance(new Date());
+      } catch (e) {
+        console.error("[ProfessorDashboard] Error finalizing attendance:", e);
+        //alert("Failed to snapshot attendance. Check console for details.");
+        setSaveAttendanceError("Failed to snapshot attendance. Check console for details.");
+      } finally {
+        setSavingAttendance(false);
+      }
+    }
   return (
     <DashboardLayout title="Professor Dashboard" onLogout={onLogout}>
       {/* Top: class overview */}
       <ClassAttendanceOverview
         students={students}
         computeStatus={computeStatus}
+        preview={true}
       />
 
       {/* Middle: course config + student details */}
@@ -386,6 +492,7 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
             >
               {savingConfig ? "Saving..." : "Save course settings"}
             </button>
+
             {saveError && (
               <span className="text-xs text-red-400">{saveError}</span>
             )}
@@ -393,6 +500,29 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
               <span className="text-[11px] text-slate-500">
                 Saved at{" "}
                 {lastSavedAt.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={finalizeTodayAttendance}
+              disabled={savingAttendance}
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-200
+                        hover:border-emerald-400 hover:bg-slate-900/80 transition-colors"
+            >
+              {savingAttendance ? "Saving..." : "Finalize today's attendance"}
+            </button>
+
+            {saveAttendanceError && (
+              <span className="text-xs text-red-400">{saveAttendanceError}</span>
+            )}
+            {!saveAttendanceError && lastSavedAttendance && (
+              <span className="text-[11px] text-slate-500">
+                Attendance saved at{" "}
+                {lastSavedAttendance.toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -407,6 +537,7 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
           onOverrideStatusChange={setOverrideStatus}
           showOverrideControls={true}
           onDeleteStudent={handleDeleteStudent}
+          preview={true}
         />
       </section>
 
@@ -417,6 +548,7 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
         computeStatus={computeStatus}
         onSelectStudent={setSelectedStudent}
         setShowAddStudentForm={setShowAddStudentForm}
+        preview={true}
       />
 
       {showAddStudentForm && (

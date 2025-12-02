@@ -161,8 +161,29 @@ export default function StudentDashboard({
   // respects overrideStatus / saved status snapshot
   function computeStatus(s) {
     if (!s) return "UNKNOWN";
+
+    // If today's attendance was finalized, use that
+    const records = Array.isArray(s.attendanceRecords)
+      ? s.attendanceRecords
+      : [];
+
+    const todayKey = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const todayRecord = records.find((r) => r.date === todayKey);
+
+    if (todayRecord) {
+      // If professor ever overrode at finalize time, respect that first
+      return (
+        todayRecord.overrideStatus ||
+        todayRecord.status ||
+        "UNKNOWN"
+      );
+    }
+
+    // No finalized record for today, so fall back to live status
     if (s.overrideStatus) return s.overrideStatus;
     if (s.status) return s.status;
+
+    // Absolute fallback: compute automatically
     return computeAutomaticStatus(s);
   }
 
@@ -180,10 +201,11 @@ export default function StudentDashboard({
       overrideStatus: null,
     };
 
-  const effectiveStatus = getEffectiveStatus(displayStudent, computeStatus);
+  const effectiveStatus = getEffectiveStatus(displayStudent, computeStatus, false);
   const attendanceSummary = getAttendanceSummary(
     displayStudent,
-    effectiveStatus
+    effectiveStatus,
+    false
   );
 
   if (loading) {
@@ -221,6 +243,7 @@ export default function StudentDashboard({
           computeStatus={computeStatus}
           onOverrideStatusChange={() => {}}
           showOverrideControls={false}
+          preview={false}
         />
       </section>
 

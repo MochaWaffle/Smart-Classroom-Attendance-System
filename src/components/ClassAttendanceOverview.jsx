@@ -4,9 +4,9 @@ import {
   getAttendanceEmoji,
 } from "../utils/attendance";
 
-export default function ClassAttendanceOverview({ students, computeStatus }) {
+export default function ClassAttendanceOverview({ students, computeStatus, preview }) {
   const { totalSessions, totalAttended, percent } =
-    getClassAttendanceSummary(students, computeStatus);
+    getClassAttendanceSummary(students, computeStatus, preview);
   const color = getAttendanceColorClass(percent);
   const emoji = getAttendanceEmoji(percent);
 

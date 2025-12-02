@@ -14,6 +14,7 @@ export default function StudentDetailsPanel({
   onOverrideStatusChange,
   showOverrideControls = true,
   onDeleteStudent,
+  preview
 }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
@@ -74,7 +75,7 @@ export default function StudentDetailsPanel({
                 <div>
                   <span className="text-slate-400 text-xs">Status</span>
                   <div className="text-xs">
-                    {getEffectiveStatus(selectedStudent, computeStatus)}
+                    {getEffectiveStatus(selectedStudent, computeStatus, preview)}
                   </div>
                 </div>
                 {showOverrideControls && (
@@ -105,8 +106,8 @@ export default function StudentDetailsPanel({
                 <div>
                   <span className="text-slate-400 text-xs">Attendance</span>
                   {(() => {
-                    const effectiveStatus = getEffectiveStatus(selectedStudent, computeStatus);
-                    const { attended, total, percent } = getAttendanceSummary(selectedStudent, effectiveStatus);
+                    const effectiveStatus = getEffectiveStatus(selectedStudent, computeStatus, preview);
+                    const { attended, total, percent } = getAttendanceSummary(selectedStudent, effectiveStatus, preview);
                     const color = getAttendanceColorClass(percent);
                     const emoji = getAttendanceEmoji(percent);
 

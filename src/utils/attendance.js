@@ -13,10 +13,20 @@ export const PRESENT_STATUSES = ["ON_TIME", "LATE", "EXCUSED"];
 
 // Statuses that count towards attendance calculation
 // Doesn't include PENDING and UNKNOWN
-export const COUNTED_STATUSES = ["ON_TIME", "LATE", "ABSENT", "SKIPPED", "EXCUSED"];
+export const COUNTED_STATUSES = [
+  "ON_TIME",
+  "LATE",
+  "ABSENT",
+  "SKIPPED",
+  "EXCUSED",
+];
 
-// Parses timestamp in "YYYY-MM-DD HH:MM" format and returns total minutes
-// Time is in 24-hour format
+// Helper for "today" key
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+}
+
+// Parses timestamp in "YYYY-MM-DD HH:MM" (or "... HH:MM:SS") and returns total minutes
 // Null is for no timestamp, while -1 indicates an invalid format
 export function getMinuteFromTimestamp(timestamp) {
   if (!timestamp) {
@@ -42,15 +52,14 @@ export function getMinuteFromTimestamp(timestamp) {
   }
 
   if (seconds) {
-      return (hour * 60) + minute + (seconds / 60);
+    return hour * 60 + minute + seconds / 60;
   }
 
-  return (hour * 60) + minute;
+  return hour * 60 + minute;
 }
 
-// Parses timestring in "HH:MM" format and returns total minutes
-// Time is in 24-hour format
-// Returns null if there is no timestring, while -1 indicates an invalid format
+// Parses timestring in "HH:MM" and returns total minutes
+// Returns null if no string; -1 if invalid
 export function getMinuteFromTimestring(timeString) {
   if (!timeString) {
     return null;
@@ -65,10 +74,45 @@ export function getMinuteFromTimestring(timeString) {
   return hour * 60 + minute;
 }
 
-// Calculates the session duration in minutes based on students' arrival and leave times
-// Returns null if not possible
-// Returns -1 if the arrival and/or leave time format is invalid
-export function getSessionDurationMinutes(student) {
+/**
+ * Calculates the session duration in minutes.
+ *
+ * preview = false (student view):
+ *   - If today's attendance record exists and has durationSeconds, use that.
+ *   - Otherwise fall back to live lastArrival/lastLeave.
+ *
+ * preview = true (professor / live preview):
+ *   - Ignore saved duration for today, always use live lastArrival/lastLeave.
+ */
+export function getSessionDurationMinutes(student, preview = false) {
+  if (!student) return null;
+
+  const todayKey = getTodayKey();
+  const records = Array.isArray(student.attendanceRecords)
+    ? student.attendanceRecords
+    : [];
+  const todayRecord = records.find((r) => r.date === todayKey);
+
+  // When NOT previewing, try to use finalized snapshot first
+  if (!preview && todayRecord) {
+    if (typeof todayRecord.durationSeconds === "number") {
+      return todayRecord.durationSeconds / 60;
+    }
+
+    // Fallback: compute from today's record timestamps if present
+    if (todayRecord.lastArrival && todayRecord.lastLeave) {
+      const arr = getMinuteFromTimestamp(todayRecord.lastArrival);
+      const lv = getMinuteFromTimestamp(todayRecord.lastLeave);
+
+      if (arr === -1 || lv === -1) return -1;
+      if (arr == null || lv == null) return null;
+      if (lv < arr) return -1;
+
+      return lv - arr;
+    }
+  }
+
+  // Live values (used for preview, or if there's no finalized record)
   const arrival = getMinuteFromTimestamp(student.lastArrival);
   const leave = getMinuteFromTimestamp(student.lastLeave);
 
@@ -87,26 +131,59 @@ export function getSessionDurationMinutes(student) {
   return leave - arrival;
 }
 
-// Formats session duration based on students' arrival and leave times
-export function formatSessionDuration(student) {
-  const durationMinutes = getSessionDurationMinutes(student);
+/**
+ * Human-readable HH:MM:SS duration.
+ * Respects preview vs finalized using getSessionDurationMinutes(student, preview).
+ */
+export function formatSessionDuration(student, preview = false) {
+  const durationMinutes = getSessionDurationMinutes(student, preview);
 
   if (durationMinutes === null || durationMinutes === -1) return "N/A";
 
   const totalSeconds = Math.floor(durationMinutes * 60);
 
-  // const hours = Math.floor(durationMinutes / 60);
-  // const minutes = durationMinutes % 60;
-  // const seconds = durationMinutes * 60;
-
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  
+
   return `${hours}h ${minutes}m ${seconds}s`;
 }
 
-export function getEffectiveStatus(student, computeFn) {
+/**
+ * Effective *status* for display.
+ *
+ * preview = true  (professor / live):
+ *   - Use overrideStatus if present, otherwise computeFn(student).
+ *
+ * preview = false (student view / finalized):
+ *   - If today's record exists, trust its overrideStatus / status.
+ *   - Otherwise, use live overrideStatus or computeFn(student).
+ */
+export function getEffectiveStatus(student, computeFn, preview = false) {
+  if (!student) return "UNKNOWN";
+
+  if (preview) {
+    if (student.overrideStatus) {
+      return student.overrideStatus;
+    }
+    return computeFn(student);
+  }
+
+  const records = Array.isArray(student.attendanceRecords)
+    ? student.attendanceRecords
+    : [];
+
+  const todayKey = getTodayKey();
+  const todayRecord = records.find((r) => r.date === todayKey);
+
+  if (todayRecord) {
+    return (
+      todayRecord.overrideStatus ||
+      todayRecord.status ||
+      "UNKNOWN"
+    );
+  }
+
   if (student.overrideStatus) {
     return student.overrideStatus;
   }
@@ -114,76 +191,102 @@ export function getEffectiveStatus(student, computeFn) {
   return computeFn(student);
 }
 
-// For a single student
-export function getAttendanceSummary(student, currentStatus) {
-  const records = student.attendanceRecords || [];
+/**
+ * Attendance summary for a single student.
+ *
+ * preview = false (student):
+ *   - Past days come from attendanceRecords.
+ *   - Today uses finalized record if exists; otherwise uses currentStatus.
+ *
+ * preview = true (professor / live):
+ *   - Past days still from attendanceRecords.
+ *   - Today ALWAYS uses currentStatus (ignores today's stored record),
+ *     so overrides & live changes show up as a "what if" preview.
+ */
+export function getAttendanceSummary(student, currentStatus, preview = false) {
+  const records = Array.isArray(student.attendanceRecords)
+    ? student.attendanceRecords
+    : [];
 
-  // Filters out unknown statuses
-  const counted = records.filter((r) =>
-    COUNTED_STATUSES.includes(r.status)
+  const todayKey = getTodayKey();
+
+  // Past finalized sessions (excluding today)
+  const pastCounted = records.filter(
+    (r) => r.date !== todayKey && COUNTED_STATUSES.includes(r.status)
   );
 
-  // const total = counted.length;
-  //const [total, setTotal] = useState(counted.length);
-  let total = counted.length;
+  let total = pastCounted.length;
+  let attended = pastCounted.filter((r) =>
+    PRESENT_STATUSES.includes(r.status)
+  ).length;
 
-  let attended = counted.filter((r) =>
-      PRESENT_STATUSES.includes(r.status)
-    ).length;
+  const todayRecord = records.find((r) => r.date === todayKey);
 
-  if (currentStatus && currentStatus !== "PENDING" && currentStatus !== "UNKNOWN") {
-    if (COUNTED_STATUSES.includes(currentStatus)) {
-      //setTotal(total + 1);
-      total += 1;
+  let todayStatus = null;
+
+  if (!preview) {
+    // STUDENT VIEW:
+    if (todayRecord) {
+      todayStatus =
+        todayRecord.overrideStatus ||
+        todayRecord.status ||
+        null;
+    } else {
+      todayStatus = currentStatus || null;
     }
+  } else {
+    // PROFESSOR PREVIEW:
+    todayStatus = currentStatus || null;
+  }
 
-    if (PRESENT_STATUSES.includes(currentStatus)) {
+  if (
+    todayStatus &&
+    todayStatus !== "PENDING" &&
+    todayStatus !== "UNKNOWN" &&
+    COUNTED_STATUSES.includes(todayStatus)
+  ) {
+    total += 1;
+    if (PRESENT_STATUSES.includes(todayStatus)) {
       attended += 1;
     }
   }
 
-  // If attendance record is empty, then can't calculate past attendance
   if (total === 0) {
     return { attended: 0, total: 0, percent: 0 };
   }
 
-  // Filter only present statuses and gets its length (attended count)
-  // const attended = counted.filter((r) =>
-  //   PRESENT_STATUSES.includes(r.status)
-  // ).length;
-
-  // const [attended, setAttended] = useState(
-  //   counted.filter((r) =>
-  //     PRESENT_STATUSES.includes(r.status)
-  //   ).length
-  // );
-
-  // Calculates percentage (unrounded)
-  const percent = ((attended / total) * 100);
-
+  const percent = (attended / total) * 100;
   return { attended, total, percent };
 }
 
-// For the whole class
-export function getClassAttendanceSummary(students, computeStatus) {
+/**
+ * Class summary.
+ *
+ * preview is forwarded down:
+ *   - false: student-style view (trust finalized today if it exists).
+ *   - true: preview-style (today from live status).
+ */
+export function getClassAttendanceSummary(
+  students,
+  computeStatus,
+  preview = false
+) {
   let totalSessions = 0;
   let totalAttended = 0;
 
-  // For each student, counts their attended and total sessions
-  // and adds them to totalSessions and totalAttended
-  // (to calculate class average)
   students.forEach((s) => {
-    const effectiveStatus = getEffectiveStatus(s, computeStatus);
-    const { attended, total } = getAttendanceSummary(s, effectiveStatus);
+    const effectiveStatus = getEffectiveStatus(s, computeStatus, preview);
+    const { attended, total } = getAttendanceSummary(
+      s,
+      effectiveStatus,
+      preview
+    );
     totalSessions += total;
     totalAttended += attended;
   });
 
-  // Calculates class average percentage (unrounded)
   const percent =
-    totalSessions === 0
-      ? 0
-      : ((totalAttended / totalSessions) * 100);
+    totalSessions === 0 ? 0 : (totalAttended / totalSessions) * 100;
 
   return { totalSessions, totalAttended, percent };
 }
@@ -193,7 +296,6 @@ export function getAttendanceColorClass(percent) {
   if (percent >= 90) return "text-emerald-300";
   if (percent >= 70) return "text-amber-300";
   if (percent >= 40) return "text-orange-300";
-  //if (percent > 0) return "text-red-300";
   return "text-red-300";
 }
 
@@ -201,6 +303,6 @@ export function getAttendanceColorClass(percent) {
 export function getAttendanceEmoji(percent) {
   if (percent >= 90) return "🟢"; // S-tier
   if (percent >= 70) return "🟡"; // decent
-  if (percent >= 40) return "🟠";   // bad
+  if (percent >= 40) return "🟠"; // bad
   return "🔴";                    // very bad
 }

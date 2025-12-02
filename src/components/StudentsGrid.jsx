@@ -7,6 +7,7 @@ export default function StudentsGrid({
   computeStatus,
   onSelectStudent,
   setShowAddStudentForm,
+  preview,
 }) {
   return (
     <section>
@@ -15,8 +16,8 @@ export default function StudentsGrid({
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {students.map((s) => {
-          const effectiveStatus = getEffectiveStatus(s, computeStatus);
-          const attendanceSummary = getAttendanceSummary(s, effectiveStatus);
+          const effectiveStatus = getEffectiveStatus(s, computeStatus, preview);
+          const attendanceSummary = getAttendanceSummary(s, effectiveStatus, preview);
           const isSelected = selectedStudent && selectedStudent.id === s.id;
 
           return (
