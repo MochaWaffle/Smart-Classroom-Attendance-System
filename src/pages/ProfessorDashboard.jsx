@@ -142,39 +142,9 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
     }
   }
 
-  // Override status for a student
-  async function setOverrideStatus(studentId, newStatus) {
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.id === studentId 
-          ? { ...s, overrideStatus: newStatus || null, status: newStatus || s.status } 
-          : s
-      )
-    );
-
-    setSelectedStudent((prev) =>
-      prev && prev.id === studentId
-        ? { ...prev, overrideStatus: newStatus || null, status: newStatus || prev.status }
-        : prev
-    );
-
-    if (!courseDocId) return;
-
-    try {
-      const ref = doc(db, "courses", courseDocId, "students", studentId);
-
-      await updateDoc(ref, {
-        overrideStatus: newStatus || null,
-        // store last known effective status snapshot as well
-        status: newStatus || null,
-      });
-    } catch (e) {
-      console.error("[ProfessorDashboard] Error saving overrideStatus:", e);
-    }
-  }
-
-  // Compute status (unchanged, uses state config)
-  function computeStatus(student) {
+  // Automatically computes the student status. Basically, computeStatus code was
+  // transferred to here
+  function computeAutomaticStatus(student) {
     const startMinutes = getMinuteFromTimestring(startTime);
     const endMinutes = getMinuteFromTimestring(endTime);
 
@@ -184,9 +154,7 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
 
     const now = new Date();
     const nowMinutes =
-      now.getHours() * 60 +
-      now.getMinutes() +
-      now.getSeconds() / 60;
+      now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
 
     const arrivalInMinutes = getMinuteFromTimestamp(student.lastArrival);
     const leaveInMinutes = getMinuteFromTimestamp(student.lastLeave);
@@ -230,6 +198,106 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
         return "LATE";
       }
     }
+  }
+
+  useEffect(() => {
+    if (!courseDocId || students.length === 0) return;
+
+    async function syncStatuses() {
+      const updates = [];
+
+      // Updates each student's in the course status
+      // to the database
+      for (const s of students) {
+        if (!s) continue;
+
+        // If there's an override, do not touch status
+        if (s.overrideStatus) continue;
+
+        // Status calculated for the student
+        const auto = computeAutomaticStatus(s);
+
+        // Only persist if changed. Avoids multiple writes to the database
+        // when not needed
+        if (auto && auto !== s.status) {
+          updates.push({ id: s.id, status: auto });
+          try {
+            const ref = doc(db, "courses", courseDocId, "students", s.id);
+            await updateDoc(ref, { status: auto });
+          } catch (e) {
+            console.error(
+              "[ProfessorDashboard] Error updating status for",
+              s.id,
+              e
+            );
+          }
+        }
+      }
+
+      // Updates every student inside the students array
+      if (updates.length > 0) {
+        setStudents((prev) =>
+          prev.map((s) => {
+            const u = updates.find((u) => u.id === s.id);
+            return u ? { ...s, status: u.status } : s;
+          })
+        );
+
+        // Updates selected students' status
+        setSelectedStudent((prev) => {
+          if (!prev) return prev;
+          const u = updates.find((u) => u.id === prev.id);
+          return u ? { ...prev, status: u.status } : prev;
+        });
+      }
+    }
+
+    syncStatuses();
+  }, [students, startTime, endTime, graceMinutes, minMinutesPresent, courseDocId]);
+
+  // Override status for a student
+  async function setOverrideStatus(studentId, newStatus) {
+      const override = newStatus || null;
+
+      // Local state: overrideStatus only. Status is not updated here
+      // Updates selected students' override status
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === studentId ? { ...s, overrideStatus: override } : s
+        )
+      );
+
+      // Updates selected student override status
+      setSelectedStudent((prev) =>
+        prev && prev.id === studentId
+          ? { ...prev, overrideStatus: override }
+          : prev
+      );
+
+      if (!courseDocId) return;
+
+      // Updates selected student override status in the database
+      try {
+        const ref = doc(db, "courses", courseDocId, "students", studentId);
+        await updateDoc(ref, {
+          overrideStatus: override,
+        });
+      } catch (e) {
+        console.error("[ProfessorDashboard] Error saving overrideStatus:", e);
+      }
+  }
+
+  // Compute status now returns the students status that's been
+  // saved on the database.
+  function computeStatus(student) {
+    if (!student) return "UNKNOWN";
+
+    if (student.overrideStatus) return student.overrideStatus;
+    if (student.status) return student.status;
+
+    // Computes the students' status as a fallback if for some reason
+    // it wasn't already computed
+    return computeAutomaticStatus(student);
   }
 
   function handleStudentCreated(newStudent) {
