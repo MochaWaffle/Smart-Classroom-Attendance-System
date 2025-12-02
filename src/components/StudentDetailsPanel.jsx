@@ -66,6 +66,12 @@ export default function StudentDetailsPanel({
                   </div>
                 </div>
                 <div>
+                  <span className="text-slate-400 text-xs">Visit Count</span>
+                  <div className="text-xs text-slate-300">
+                    {selectedStudent.visitCount || 0}
+                  </div>
+                </div>
+                <div>
                   <span className="text-slate-400 text-xs">Status</span>
                   <div className="text-xs">
                     {getEffectiveStatus(selectedStudent, computeStatus)}
@@ -138,7 +144,7 @@ export default function StudentDetailsPanel({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation(); // don’t trigger the card’s onClick
-                      
+
                       if (onDeleteStudent && selectedStudent) {
                         onDeleteStudent(selectedStudent);
                       }

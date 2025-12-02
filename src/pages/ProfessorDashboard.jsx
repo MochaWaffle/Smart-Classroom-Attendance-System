@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { db } from "../utils/firebase";
-import { doc, getDoc, setDoc, getDocs, collection, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocs, collection, deleteDoc, updateDoc } from "firebase/firestore";
 
 import { MOCK_STUDENTS } from "../data/mockStudents.js";
 import {
@@ -143,18 +143,34 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
   }
 
   // Override status for a student (still local)
-  function setOverrideStatus(studentId, newStatus) {
+  async function setOverrideStatus(studentId, newStatus) {
     setStudents((prev) =>
       prev.map((s) =>
-        s.id === studentId ? { ...s, overrideStatus: newStatus || null } : s
+        s.id === studentId 
+          ? { ...s, overrideStatus: newStatus || null, status: newStatus || s.status } 
+          : s
       )
     );
 
     setSelectedStudent((prev) =>
       prev && prev.id === studentId
-        ? { ...prev, overrideStatus: newStatus || null }
+        ? { ...prev, overrideStatus: newStatus || null, status: newStatus || prev.status }
         : prev
     );
+
+    if (!courseDocId) return;
+
+    try {
+      const ref = doc(db, "courses", courseDocId, "students", studentId);
+
+      await updateDoc(ref, {
+        overrideStatus: newStatus || null,
+        // store last known effective status snapshot as well
+        status: newStatus || null,
+      });
+    } catch (e) {
+      console.error("[ProfessorDashboard] Error saving overrideStatus:", e);
+    }
   }
 
   // Compute status (unchanged, uses state config)
