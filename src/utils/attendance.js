@@ -23,7 +23,13 @@ export const COUNTED_STATUSES = [
 
 // Helper for "today" key
 function getTodayKey() {
-  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  //return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const d = new Date();          // LOCAL TIME
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 // Parses timestamp in "YYYY-MM-DD HH:MM" (or "... HH:MM:SS") and returns total minutes

@@ -16,6 +16,8 @@ import StudentDetailsPanel from "../components/StudentDetailsPanel.jsx";
 import StudentAttendanceOverview from "../components/StudentAttendanceOverview.jsx";
 import StudentCourseConfigPanel from "../components/StudentCourseConfigPanel.jsx";
 
+import { getTodayKeyLocal } from "../utils/date";
+
 export default function StudentDashboard({
   student,
   courseDocId,
@@ -170,7 +172,9 @@ export default function StudentDashboard({
       ? s.attendanceRecords
       : [];
 
-    const todayKey = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    //const todayKey = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const todayKey = getTodayKeyLocal();
+
     const todayRecord = records.find((r) => r.date === todayKey);
 
     if (todayRecord) {
@@ -205,7 +209,9 @@ export default function StudentDashboard({
       visitCount: 0,
     };
 
-    const todayKey = new Date().toISOString().slice(0, 10);
+    //const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = getTodayKeyLocal();
+    
     const records = Array.isArray(baseStudent.attendanceRecords)
       ? baseStudent.attendanceRecords
       : [];

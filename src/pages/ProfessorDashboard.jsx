@@ -17,9 +17,12 @@ import StudentDetailsPanel from "../components/StudentDetailsPanel.jsx";
 import StudentsGrid from "../components/StudentsGrid.jsx";
 import AddStudent from "../components/AddStudent.jsx";
 
+import { getTodayKeyLocal } from "../utils/date";
+
 function getTodayKey() {
   // Local date, simple and good enough for this project
-  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  //return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  return getTodayKeyLocal();
 }
 
 export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }) {

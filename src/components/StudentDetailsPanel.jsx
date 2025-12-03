@@ -8,6 +8,8 @@ import {
 } from "../utils/attendance";
 import { formatTotalDuration } from "../utils/time";
 
+import { getTodayKeyLocal } from "../utils/date";
+
 export default function StudentDetailsPanel({
   selectedStudent,
   computeStatus,
@@ -36,7 +38,8 @@ export default function StudentDetailsPanel({
       ? selectedStudent.attendanceRecords
       : [];
 
-    const todayKey = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    //const todayKey = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const todayKey = getTodayKeyLocal();
     const todayRecord = records.find((r) => r.date === todayKey);
 
     if (todayRecord) {
