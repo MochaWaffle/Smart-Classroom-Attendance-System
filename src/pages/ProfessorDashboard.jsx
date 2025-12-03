@@ -309,7 +309,7 @@ export default function ProfessorDashboard({ onLogout, courseDocId, courseMeta }
 
   function handleStudentCreated(newStudent) {
     // update local list immediately
-    setStudents((prev) => [...prev, newStudent]);
+    //setStudents((prev) => [...prev, newStudent]);
     setShowAddStudentForm(false);
   }
 
