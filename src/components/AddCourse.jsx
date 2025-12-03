@@ -117,7 +117,7 @@ export default function AddCourse({ profId, onCreated, onCancel }) {
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
           />
         </div>
 
@@ -129,7 +129,7 @@ export default function AddCourse({ profId, onCreated, onCancel }) {
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
           />
         </div>
 
@@ -167,7 +167,7 @@ export default function AddCourse({ profId, onCreated, onCancel }) {
           type="submit"
           disabled={saving}
           className="rounded-lg border border-emerald-500 bg-emerald-600/20 px-3 py-1.5 text-xs font-medium text-emerald-200
-                     hover:bg-emerald-600/30 hover:border-emerald-400 transition-colors disabled:opacity-50"
+                     hover:bg-emerald-600/30 hover:border-emerald-400 transition-colors disabled:opacity-50 cursor-pointer"
         >
           {saving ? "Creating..." : "Create Course"}
         </button>
@@ -176,7 +176,7 @@ export default function AddCourse({ profId, onCreated, onCancel }) {
             type="button"
             onClick={onCancel}
             className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-200
-                       hover:border-slate-500 hover:bg-slate-900/80 transition-colors"
+                       hover:border-slate-500 hover:bg-slate-900/80 transition-colors cursor-pointer"
           >
             Cancel
           </button>

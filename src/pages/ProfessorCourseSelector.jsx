@@ -116,16 +116,23 @@ export default function ProfessorCourseSelector({ profId, onSelectCourse, onLogo
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Existing courses */}
             {courses.map((course) => (
-              <button
+              <div
                 key={course.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectCourse(course)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectCourse(course);
+                  }
+                }}
                 className="relative group text-left w-full rounded-2xl border border-slate-800
                           bg-slate-900/70 p-4 
                           hover:border-emerald-500 hover:bg-slate-900
                           hover:shadow-lg hover:shadow-emerald-500/50
                           hover:-translate-y-1 hover:scale-101
-                          transition-all duration-400"
+                          transition-all duration-400 cursor-pointer"
               >
                 <button
                   type="button"
@@ -138,7 +145,7 @@ export default function ProfessorCourseSelector({ profId, onSelectCourse, onLogo
                             hover:bg-red-500/10 hover:border-red-400
                             hover:shadow-lg hover:shadow-red-500/50
                             hover:-translate-y-1 hover:scale-101
-                            transition-all duration-400"
+                            transition-all duration-400 cursor-pointer"
                 >
                   Delete
                 </button>
@@ -163,7 +170,7 @@ export default function ProfessorCourseSelector({ profId, onSelectCourse, onLogo
                 <div className="mt-1 text-[11px] text-slate-500">
                   Min present: {course.min_minutes_present ?? 0} min
                 </div>
-              </button>
+              </div>
             ))}
 
             {/* Add-course card */}
@@ -171,7 +178,8 @@ export default function ProfessorCourseSelector({ profId, onSelectCourse, onLogo
               type="button"
               onClick={() => setShowAddForm(true)}
               className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-700
-                         bg-slate-900/40 p-4 hover:border-emerald-400 hover:bg-slate-900/80 transition-colors"
+                         bg-slate-900/40 p-4 hover:border-emerald-400 hover:bg-slate-900/80 transition-colors
+                         cursor-pointer"
             >
               <div className="text-3xl mb-1">+</div>
               <div className="text-sm font-medium text-slate-100">

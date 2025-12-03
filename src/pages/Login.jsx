@@ -90,7 +90,7 @@ export default function Login({ onLogin }) {
               className={`flex-1 px-3 py-1.5 rounded-lg border text-xs ${
                 role === "student"
                   ? "border-emerald-500 bg-emerald-500/10 text-emerald-200"
-                  : "border-slate-700 bg-slate-950 text-slate-300"
+                  : "border-slate-700 bg-slate-950 text-slate-300 cursor-pointer"
               }`}
             >
               Student
@@ -101,7 +101,7 @@ export default function Login({ onLogin }) {
               className={`flex-1 px-3 py-1.5 rounded-lg border text-xs ${
                 role === "professor"
                   ? "border-emerald-500 bg-emerald-500/10 text-emerald-200"
-                  : "border-slate-700 bg-slate-950 text-slate-300"
+                  : "border-slate-700 bg-slate-950 text-slate-300 cursor-pointer"
               }`}
             >
               Professor
@@ -149,7 +149,7 @@ export default function Login({ onLogin }) {
 
         <button
           type="submit"
-          className="w-full mt-1 rounded-lg bg-emerald-500 text-slate-950 text-sm font-medium py-1.5 hover:bg-emerald-400 transition-colors"
+          className="w-full mt-1 rounded-lg bg-emerald-500 text-slate-950 text-sm font-medium py-1.5 hover:bg-emerald-400 transition-colors cursor-pointer"
         >
           Continue
         </button>

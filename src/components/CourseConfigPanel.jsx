@@ -37,7 +37,7 @@ export default function CourseConfigPanel({
               type="time"
               value={startTime}
               onChange={(e) => onStartTimeChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             />
           </div>
 
@@ -49,7 +49,7 @@ export default function CourseConfigPanel({
               type="time"
               value={endTime}
               onChange={(e) => onEndTimeChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             />
           </div>
 

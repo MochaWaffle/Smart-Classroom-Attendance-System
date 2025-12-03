@@ -134,7 +134,7 @@ export default function StudentDetailsPanel({
             <span className="text-slate-400 text-xs">Override Status</span>
             <select
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500
-                         hover:border-emerald-500 hover:bg-slate-900 transition-colors"
+                         hover:border-emerald-500 hover:bg-slate-900 transition-colors cursor-pointer"
               value={viewStudent.overrideStatus || ""}
               onChange={(e) =>
                 onOverrideStatusChange(viewStudent.id, e.target.value)
@@ -191,7 +191,7 @@ export default function StudentDetailsPanel({
                          hover:bg-red-500/10 hover:border-red-400 
                          hover:shadow-lg hover:shadow-red-500/50
                          hover:-translate-y-1 hover:scale-101
-                         transition-all duration-400"
+                         transition-all duration-400 cursor-pointer"
             >
               Delete Student
             </button>

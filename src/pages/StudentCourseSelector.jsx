@@ -69,16 +69,23 @@ export default function StudentCourseSelector({ student, onSelectCourse, onLogou
         {!loading && courses.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {courses.map((course) => (
-              <button
+              <div
                 key={course.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectCourse(course)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectCourse(course);
+                  }
+                }}
                 className="group text-left w-full rounded-2xl border border-slate-800
                            bg-slate-900/70 p-4 
                            hover:border-emerald-500 hover:bg-slate-900
                            hover:shadow-lg hover:shadow-emerald-500/50
                            hover:-translate-y-1 hover:scale-101
-                           transition-all duration-400"
+                           transition-all duration-400 cursor-pointer"
               >
                 <div className="text-xs font-semibold text-slate-300 mb-1">
                   {course.course_id || "(No ID)"}
@@ -101,7 +108,7 @@ export default function StudentCourseSelector({ student, onSelectCourse, onLogou
                 <div className="mt-1 text-[11px] text-slate-500">
                   Min present: {course.min_minutes_present ?? 0} min
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}

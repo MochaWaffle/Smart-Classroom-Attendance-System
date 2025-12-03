@@ -69,7 +69,7 @@ export default function StudentCard({ student, attendanceSummary, onClick }) {
                   hover:border-emerald-500 hover:bg-slate-900
                   hover:shadow-lg hover:shadow-emerald-500/50
                   hover:-translate-y-1 hover:scale-101
-                  transition-all duration-400"
+                  transition-all duration-400 cursor-pointer"
     >
       <div className="flex items-center justify-between mb-2">
         <div>
