@@ -26,7 +26,7 @@ function getAttendanceCaption(percent) {
   if (percent >= 90) return "NERD";
   if (percent >= 70) return "Decent attendance...or is it?";
   if (percent >= 40) return "POV: You're failing the course";
-  return "Your professor about to Hollow Purple your butt";
+  return "Your professor about to Hollow Purple your ahh";
 }
 
 function getAttendanceShadow(percent) {
