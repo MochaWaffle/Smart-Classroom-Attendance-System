@@ -1,5 +1,12 @@
 # Smart-Classroom-Attendance-System
-An EPIC classroom-ready solution that records student attendance via RFID
+An EPIC classroom-ready solution that records student attendance via RFID.
+
+## Quick-Info
+esp32-bridge - Folder that contains the server code to be hosted online using services such as Render.
+
+Smart_Classroom_Attendance - Folder that contains Arduino code for the ESP32-S.
+
+Everything else - Vite + React + JavaScript SWC website. Can run `npm run build` after setting up the repository locally to host online using services such as Netlify.
 
 ## How it works
 An ESP32-S is connected on a breadboard connected to a RFID reader, a LED, and a buzzer using jumper wires. Then, the Arduino code inside Smart_Classroom_Attendance is uploaded to the ESP32-S. The user would modify the Arduino Code to connect to their specific WiFi. The user would also include the course doc id from the database after the professor already created a course in the website. Thus, the attendance system only works for one course per professor.
@@ -37,7 +44,10 @@ When the professor is done for the day, they can click on the finalize attendanc
 The professor can re-finalize student attendances.
 
 Lastly, once the professor is done for the day, and they are sure the attendance has been finalized and they clicked on the finalize attendance button, the professor can click on clear today's attendance. What this would do is reset every student's attendance for today (not the finalized one). That way, for next class, every student's attendance is already reset, ready for new arrival/leave scans and new statuses.
+
 ## What we used
+
+Arduino IDE - Used to upload the Arduino code inside the Smart_Classroom_Attendance folder to the ESP32-S.
 
 Firebase/Firestore - Database to store student attendance information, courses created (alongside course information), student UIDs, students added in each course, and professor IDs for different professors to store different courses they created.
 
@@ -52,7 +62,10 @@ Clone this repository and install Node.js to use npm. Then, run `npm create vite
 
 Then, run `npm run dev` to see the website in localhost.
 
+## How to host program
+First run the program locally by installing Node.js (to install npm), running `npm create vite@latest`, and selecting React + JavaScript SWC, and default options for remaining options.
 
+Then, run `npm run build` and upload the dist folder to an online hosting service (such as Netlify).
 
 
 
