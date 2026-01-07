@@ -1,6 +1,8 @@
 # Smart-Classroom-Attendance-System
 An EPIC classroom-ready solution that records student attendance via RFID.
 
+Website: https://smart-classroom-attendance-system.netlify.app/
+
 ## Quick-Info
 esp32-bridge - Folder that contains the server code to be hosted online using services such as Render.
 
